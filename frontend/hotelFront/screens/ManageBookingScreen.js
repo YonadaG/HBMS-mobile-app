@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useHotel } from '../context/HotelContext';
 
 const primaryBg = '#0b1420';
 const cardBg = '#0f1f31';
@@ -15,30 +16,22 @@ const textLight = '#ffffff';
 const textMuted = '#cdd5e1';
 const accent = '#1e6eff';
 
-const mockBookings = [
-  {
-    id: 'b1',
-    status: 'CONFIRMED',
-    title: 'Deluxe King Suite',
-    dates: 'Nov 12 - Nov 15 • 3 Nights',
-    price: '$450.00',
-    perks: ['Free WiFi', 'Ocean View'],
-    image:
-      'https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&w=1200&q=80',
-  },
-  {
-    id: 'b2',
-    status: 'PENDING',
-    title: 'Twin Room',
-    dates: 'Dec 01 - Dec 03 • 2 Nights',
-    price: '$200.00',
-    perks: ['Breakfast', 'Late Checkout'],
-    image:
-      'https://images.unsplash.com/photo-1501117716987-c8e1ecb210af?auto=format&fit=crop&w=1200&q=80',
-  },
-];
-
 export default function ManageBookingScreen({ navigation }) {
+  const { bookings, roomTypes } = useHotel();
+
+  // Enrich bookings with room details
+  const myBookings = bookings.map(b => {
+    const rt = roomTypes.find(type => type.name === b.roomType) || roomTypes[0];
+    return {
+      ...b,
+      title: b.roomType,
+      image: rt.image,
+      dates: `${b.checkIn} - ${b.checkOut}`,
+      priceValue: b.price, // Store numeric for calc
+      price: `$${b.price}`,
+      perks: ['Free Cancellation', 'Breakfast Included'], // Mock perks
+    };
+  });
   return (
     <View style={styles.safe}>
       <View style={styles.topbar}>
@@ -46,56 +39,58 @@ export default function ManageBookingScreen({ navigation }) {
           <Ionicons name="arrow-back" size={22} color={textLight} />
         </TouchableOpacity>
         <Text style={styles.title}>Manage Bookings</Text>
-        <TouchableOpacity style={styles.iconBtn}>
-          <Ionicons name="options-outline" size={22} color={textLight} />
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.tabs}>
-        <View style={[styles.tab, styles.tabActive]}>
-          <Text style={styles.tabTextActive}>Upcoming</Text>
-        </View>
-        <View style={styles.tab}>
-          <Text style={styles.tabText}>History</Text>
-        </View>
+        <View style={{ width: 38 }} />
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll}>
-        {mockBookings.map((b) => (
-          <View key={b.id} style={styles.card}>
-            <Image source={{ uri: b.image }} style={styles.image} />
-            <View style={styles.badgeWrapper}>
-              <View style={[styles.badge, b.status === 'CONFIRMED' ? styles.badgeGreen : styles.badgeYellow]}>
-                <Text style={styles.badgeText}>{b.status}</Text>
-              </View>
-            </View>
-            <View style={styles.body}>
-              <Text style={styles.cardTitle}>{b.title}</Text>
-              <View style={styles.row}>
-                <Ionicons name="calendar" size={16} color={textMuted} />
-                <Text style={styles.meta}>{b.dates}</Text>
-              </View>
-              <View style={styles.perks}>
-                {b.perks.map((p) => (
-                  <View key={p} style={styles.perk}>
-                    <Ionicons name="checkmark-circle" size={14} color={accent} />
-                    <Text style={styles.perkText}>{p}</Text>
-                  </View>
-                ))}
-              </View>
-              <View style={styles.footer}>
-                <View>
-                  <Text style={styles.label}>Price per room</Text>
-                  <Text style={styles.price}>{b.price}</Text>
-                </View>
-                <TouchableOpacity style={styles.removeBtn}>
-                  <Ionicons name="trash-outline" size={16} color="#f87171" />
-                  <Text style={styles.removeText}>Remove</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
+        {myBookings.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Ionicons name="calendar-outline" size={64} color={textMuted} />
+            <Text style={styles.emptyText}>No booked room</Text>
+            <TouchableOpacity
+              style={styles.bookButton}
+              onPress={() => navigation.navigate('ExploreRooms')}
+            >
+              <Text style={styles.bookButtonText}>Book a Room</Text>
+            </TouchableOpacity>
           </View>
-        ))}
+        ) : (
+          myBookings.map((b) => (
+            <View key={b.id} style={styles.card}>
+              <Image source={{ uri: b.image }} style={styles.image} />
+              <View style={styles.badgeWrapper}>
+                <View style={[styles.badge, b.status === 'CONFIRMED' ? styles.badgeGreen : styles.badgeYellow]}>
+                  <Text style={styles.badgeText}>{b.status}</Text>
+                </View>
+              </View>
+              <View style={styles.body}>
+                <Text style={styles.cardTitle}>{b.title}</Text>
+                <View style={styles.row}>
+                  <Ionicons name="calendar" size={16} color={textMuted} />
+                  <Text style={styles.meta}>{b.dates}</Text>
+                </View>
+                <View style={styles.perks}>
+                  {b.perks.map((p) => (
+                    <View key={p} style={styles.perk}>
+                      <Ionicons name="checkmark-circle" size={14} color={accent} />
+                      <Text style={styles.perkText}>{p}</Text>
+                    </View>
+                  ))}
+                </View>
+                <View style={styles.footer}>
+                  <View>
+                    <Text style={styles.label}>Price per room</Text>
+                    <Text style={styles.price}>{b.price}</Text>
+                  </View>
+                  <TouchableOpacity style={styles.removeBtn}>
+                    <Ionicons name="trash-outline" size={16} color="#f87171" />
+                    <Text style={styles.removeText}>Remove</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          ))
+        )}
 
         <View style={styles.summary}>
           <TouchableOpacity style={styles.addBtn}>
@@ -103,12 +98,22 @@ export default function ManageBookingScreen({ navigation }) {
             <Text style={styles.addText}>Add Another Room</Text>
           </TouchableOpacity>
           <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Subtotal (2 Rooms)</Text>
-            <Text style={styles.summaryValue}>$650.00</Text>
+            <Text style={styles.summaryLabel}>Subtotal ({myBookings.length} Rooms)</Text>
+            <Text style={styles.summaryValue}>
+              ${myBookings.reduce((sum, b) => sum + b.priceValue, 0).toFixed(2)}
+            </Text>
+          </View>
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>Taxes & Fees (10%)</Text>
+            <Text style={styles.summaryValue}>
+              ${(myBookings.reduce((sum, b) => sum + b.priceValue, 0) * 0.10).toFixed(2)}
+            </Text>
           </View>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Grand Total</Text>
-            <Text style={styles.totalValue}>$650.00</Text>
+            <Text style={styles.totalValue}>
+              ${(myBookings.reduce((sum, b) => sum + b.priceValue, 0) * 1.10).toFixed(2)}
+            </Text>
           </View>
         </View>
       </ScrollView>
@@ -126,7 +131,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 14,
-    paddingTop: 18,
+    paddingTop: 45,
     paddingBottom: 12,
   },
   iconBtn: {
@@ -304,6 +309,29 @@ const styles = StyleSheet.create({
     color: textLight,
     fontSize: 22,
     fontWeight: '800',
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+    gap: 16,
+  },
+  emptyText: {
+    color: textMuted,
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  bookButton: {
+    backgroundColor: accent,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 12,
+    marginTop: 8,
+  },
+  bookButtonText: {
+    color: textLight,
+    fontSize: 15,
+    fontWeight: '700',
   },
 });
 

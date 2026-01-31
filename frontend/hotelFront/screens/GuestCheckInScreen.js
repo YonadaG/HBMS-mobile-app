@@ -9,6 +9,7 @@ import {
   TextInput,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useHotel } from '../context/HotelContext';
 
 const primaryBg = '#0b1420';
 const cardBg = '#0f1f31';
@@ -17,34 +18,47 @@ const textLight = '#ffffff';
 const textMuted = '#cdd5e1';
 const success = '#10b981';
 
+
+
 export default function GuestCheckInScreen({ route, navigation }) {
-  const booking = route?.params?.booking;
+  const { bookings, updateBookingStatus, rooms: allRooms, roomTypes } = useHotel();
+  const bookingParam = route?.params?.booking;
+
+  // Find live booking from context if possible, else fallback to param
+  const booking = bookings.find(b => b.id === bookingParam?.id) || bookingParam;
 
   const guestName = booking?.guestName ?? 'Eleanor Vance';
   const roomType = booking?.roomType ?? 'Standard Queen';
+
   const guestCount = booking?.guestCount ?? 2;
   const arrivalLabel = 'Arrival: Today';
+  const nights = 4; // Mock duration
+
+  const roomPrice = useMemo(() => {
+    // Robust lookup: match exact name or fallback
+    const r = roomTypes.find(rt => rt.name === roomType) || roomTypes[0];
+    return r ? r.price : 100;
+  }, [roomType]);
+
+  const subtotal = roomPrice * nights;
+  const taxes = subtotal * 0.10; // 10% tax
+  const total = subtotal + taxes;
+  // Removed deposit logic as requested
 
   const [roomQuery, setRoomQuery] = useState('');
-  const [selectedRoom, setSelectedRoom] = useState('304');
+  const [selectedRoom, setSelectedRoom] = useState(null);
   const [passportId, setPassportId] = useState('');
   const [authorize, setAuthorize] = useState(true);
 
-  const rooms = useMemo(
-    () => [
-      { id: '304', type: 'Queen', badge: 'Vacant & Clean', available: true },
-      { id: '308', type: 'Queen', badge: '', available: true },
-      { id: 'B145', type: 'Suite', badge: '', available: true },
-      { id: '312', type: 'Queen', badge: '', available: true },
-      { id: '315', type: 'Queen', badge: '', available: true },
-    ],
-    []
-  );
+  // Filter available rooms matching the room type
+  const rooms = useMemo(() => {
+    return allRooms.filter(r => r.status === 'available' && r.roomType === roomType);
+  }, [allRooms, roomType]);
 
   const filteredRooms = useMemo(() => {
     const q = roomQuery.trim().toLowerCase();
     if (!q) return rooms;
-    return rooms.filter((r) => r.id.toLowerCase().includes(q));
+    return rooms.filter((r) => r.roomNo.toLowerCase().includes(q));
   }, [roomQuery, rooms]);
 
   return (
@@ -54,9 +68,7 @@ export default function GuestCheckInScreen({ route, navigation }) {
           <Ionicons name="arrow-back" size={22} color={textLight} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Guest Check-In</Text>
-        <TouchableOpacity style={styles.headerIconBtn}>
-          <Ionicons name="ellipsis-vertical" size={20} color={textLight} />
-        </TouchableOpacity>
+        <View style={{ width: 40 }} />
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll}>
@@ -98,12 +110,12 @@ export default function GuestCheckInScreen({ route, navigation }) {
 
           <View style={styles.roomGrid}>
             {filteredRooms.map((r) => {
-              const active = selectedRoom === r.id;
+              const active = selectedRoom === r.roomNo;
               return (
                 <TouchableOpacity
-                  key={r.id}
+                  key={r.id} // data.js rooms have id like 'r1'
                   style={[styles.roomTile, active && styles.roomTileActive]}
-                  onPress={() => setSelectedRoom(r.id)}
+                  onPress={() => setSelectedRoom(r.roomNo)}
                   activeOpacity={0.85}
                 >
                   <View style={styles.roomTileTop}>
@@ -114,21 +126,26 @@ export default function GuestCheckInScreen({ route, navigation }) {
                     ) : (
                       <View style={styles.roomEmptyDot} />
                     )}
-                    <Text style={[styles.roomId, active && styles.roomIdActive]}>{r.id}</Text>
+                    <Text style={[styles.roomId, active && styles.roomIdActive]}>{r.roomNo}</Text>
                   </View>
-                  <Text style={[styles.roomType, active && styles.roomTypeActive]}>{r.type}</Text>
+                  <Text style={[styles.roomType, active && styles.roomTypeActive]}>{r.bedType || r.roomType}</Text>
                 </TouchableOpacity>
               );
             })}
 
-            <TouchableOpacity style={[styles.roomTile, styles.roomTileGhost]} activeOpacity={0.85}>
-              <Text style={styles.roomId}>View All</Text>
-            </TouchableOpacity>
+            {filteredRooms.length === 0 && (
+              <Text style={{ color: textMuted, padding: 10 }}>No available {roomType} found.</Text>
+            )}
           </View>
 
           <View style={styles.roomStatusRow}>
-            <View style={styles.statusDot} />
-            <Text style={styles.roomStatusText}>Room {selectedRoom} is Vacant & Clean</Text>
+            {selectedRoom && (
+              <>
+                <View style={styles.statusDot} />
+                <Text style={styles.roomStatusText}>Room {selectedRoom} is Vacant & Ready</Text>
+              </>
+            )}
+            {!selectedRoom && <Text style={{ color: textMuted }}>Select a room</Text>}
           </View>
         </View>
 
@@ -149,33 +166,25 @@ export default function GuestCheckInScreen({ route, navigation }) {
             </TouchableOpacity>
           </View>
 
-          <Text style={[styles.fieldLabel, { marginTop: 14 }]}>Guest Signature</Text>
-          <TouchableOpacity style={styles.signatureBox} activeOpacity={0.85}>
-            <Ionicons name="brush" size={18} color={textMuted} />
-            <Text style={styles.signatureText}>Tap to sign registration card</Text>
-          </TouchableOpacity>
+
         </View>
 
         <Text style={styles.sectionTitle}>Payment</Text>
         <View style={styles.card}>
           <View style={styles.lineItem}>
-            <Text style={styles.lineItemLabel}>Room Total (4 Nights)</Text>
-            <Text style={styles.lineItemValue}>$580.00</Text>
+            <Text style={styles.lineItemLabel}>Room Total ({nights} Nights)</Text>
+            <Text style={styles.lineItemValue}>${subtotal.toFixed(2)}</Text>
           </View>
           <View style={styles.lineItem}>
-            <Text style={styles.lineItemLabel}>Taxes & Fees</Text>
-            <Text style={styles.lineItemValue}>$84.50</Text>
-          </View>
-          <View style={styles.lineItem}>
-            <Text style={styles.lineItemLabel}>Deposit Paid</Text>
-            <Text style={[styles.lineItemValue, { color: success }]}>-$200.00</Text>
+            <Text style={styles.lineItemLabel}>Taxes & Fees (10%)</Text>
+            <Text style={styles.lineItemValue}>${taxes.toFixed(2)}</Text>
           </View>
 
           <View style={styles.divider} />
 
           <View style={styles.balanceRow}>
-            <Text style={styles.balanceLabel}>Balance Due</Text>
-            <Text style={styles.balanceValue}>$464.50</Text>
+            <Text style={styles.balanceLabel}>Total Due</Text>
+            <Text style={styles.balanceValue}>${total.toFixed(2)}</Text>
           </View>
 
           <TouchableOpacity
@@ -192,7 +201,19 @@ export default function GuestCheckInScreen({ route, navigation }) {
       </ScrollView>
 
       <View style={styles.bottomBar}>
-        <TouchableOpacity style={styles.primaryBtn} activeOpacity={0.9}>
+        <TouchableOpacity
+          style={styles.primaryBtn}
+          activeOpacity={0.9}
+          onPress={() => {
+            if (booking && booking.id && selectedRoom) {
+              updateBookingStatus(booking.id, 'Checked In', selectedRoom);
+              alert(`Check-in Successful! Room ${selectedRoom} assigned.`);
+              navigation.navigate('StaffDashboard'); // Go to staff dashboard, not guest dashboard? Context implies this is staff action.
+            } else {
+              alert('Please select a room first.');
+            }
+          }}
+        >
           <Ionicons name="key" size={18} color={textLight} />
           <Text style={styles.primaryBtnText}>Complete Check-In</Text>
         </TouchableOpacity>
@@ -207,7 +228,8 @@ const styles = StyleSheet.create({
     backgroundColor: primaryBg,
   },
   header: {
-    height: 56,
+    paddingVertical: 18,
+    paddingTop: 45,
     paddingHorizontal: 12,
     flexDirection: 'row',
     alignItems: 'center',

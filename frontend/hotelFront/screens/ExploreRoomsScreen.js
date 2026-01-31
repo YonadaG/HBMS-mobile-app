@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { rooms } from '../data';
 import RoomCard from '../components/RoomCard';
+import { useHotel } from '../context/HotelContext';
+import { Ionicons } from '@expo/vector-icons';
 
 const primaryBg = '#0b1420';
 const textLight = '#ffffff';
@@ -11,6 +12,7 @@ const accent = '#1e6eff';
 const filters = ['All Rooms', 'Suites', 'King Bed', 'Family'];
 
 export default function ExploreRoomsScreen({ navigation }) {
+  const { rooms } = useHotel();
   const [active, setActive] = useState('All Rooms');
 
   const filtered = useMemo(() => {
@@ -34,7 +36,14 @@ export default function ExploreRoomsScreen({ navigation }) {
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.scroll}>
         <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.backBtn}
+            onPress={() => navigation.goBack()}
+          >
+            <Ionicons name="arrow-back" size={24} color={textLight} />
+          </TouchableOpacity>
           <Text style={styles.title}>Explore Rooms</Text>
+          <View style={{ width: 40 }} />
         </View>
 
         <View style={styles.filters}>
@@ -72,8 +81,19 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
   },
   header: {
-    paddingVertical: 16,
+    paddingTop: 45,
+    paddingBottom: 16,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  backBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#1a2a3a',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   title: {
     color: textLight,

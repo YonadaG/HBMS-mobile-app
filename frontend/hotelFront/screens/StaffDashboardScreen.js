@@ -1,15 +1,21 @@
 import React from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  SafeAreaView, 
-  ScrollView, 
-  TouchableOpacity, 
-  Image,
+import {
+  View,
+  Text,
+  StyleSheet,
+  SafeAreaView,
+  ScrollView,
+  TouchableOpacity,
   StatusBar
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons, MaterialIcons, FontAwesome5 } from '@expo/vector-icons';
+import { useHotel } from '../context/HotelContext';
+
+const primaryBg = '#0b1420';
+const cardBg = '#0f1f31';
+const accent = '#1e6eff';
+const textLight = '#ffffff';
+const textMuted = '#cdd5e1';
 
 // Mock data
 const mockData = {
@@ -17,49 +23,62 @@ const mockData = {
     name: 'Sarah',
     role: 'Front Desk Manager',
     status: 'Active Shift',
-    avatar: 'https://randomuser.me/api/portraits/women/44.jpg'
   },
   stats: [
-    { id: '1', title: 'Occupancy', value: '85%', change: '+2%', icon: 'building', color: '#3B82F6' },
-    { id: '2', title: 'Check-Ins', value: '12', status: 'Pending', icon: 'suitcase-rolling', color: '#10B981' },
-    { id: '3', title: 'Requests', value: '5', status: 'New', icon: 'clipboard-list', color: '#F59E0B' },
+    { id: '1', title: 'Occupancy', value: '85%', change: '+2%', icon: 'building', color: accent },
+    { id: '2', title: 'Check-Ins', value: '12', status: 'Pending', icon: 'suitcase-rolling', color: accent },
+    { id: '3', title: 'Requests', value: '5', status: 'New', icon: 'clipboard-list', color: accent },
   ],
   recentActivities: [
-    { 
-      id: '1', 
-      type: 'check-in', 
-      title: 'Room 302 Checked In', 
-      details: 'Processing by Alex M.', 
+    {
+      id: '1',
+      type: 'check-in',
+      title: 'Room 302 Checked In',
+      details: 'Processing by Alex M.',
       time: '5m ago',
       icon: 'check-circle',
-      iconColor: '#10B981'
+      iconColor: accent
     },
-    { 
-      id: '2', 
-      type: 'housekeeping', 
-      title: 'Housekeeping Request', 
-      details: 'Room 405 - Extra Towels', 
+    {
+      id: '2',
+      type: 'housekeeping',
+      title: 'Housekeeping Request',
+      details: 'Room 405 - Extra Towels',
       time: '12m ago',
       icon: 'broom',
-      iconColor: '#3B82F6'
+      iconColor: accent
     },
-    { 
-      id: '3', 
-      type: 'maintenance', 
-      title: 'Key Card Issue', 
-      details: 'Room 201 - Re-encoded', 
+    {
+      id: '3',
+      type: 'maintenance',
+      title: 'Key Card Issue',
+      details: 'Room 201 - Re-encoded',
       time: '2m ago',
       icon: 'key',
-      iconColor: '#F59E0B'
+      iconColor: accent
     },
   ]
 };
 
+
+
 const StaffDashboardScreen = ({ navigation }) => {
-  const { user, stats, recentActivities } = mockData;
+  const { user, bookings } = useHotel();
+
+  // Derive stats from bookings
+  const checkInsCount = bookings.filter(b => b.status === 'Arriving').length;
+  const occupancyRate = '85%'; // Mock for now, or calc from rooms
+
+  const stats = [
+    { id: '1', title: 'Occupancy', value: occupancyRate, change: '+2%', icon: 'building', color: accent },
+    { id: '2', title: 'Check-Ins', value: checkInsCount.toString(), status: 'Pending', icon: 'suitcase-rolling', color: accent },
+    { id: '3', title: 'Requests', value: '5', status: 'New', icon: 'clipboard-list', color: accent },
+  ];
+
+  const recentActivities = mockData.recentActivities; // Keep mock for now
 
   const handleQuickAction = (action) => {
-    switch(action) {
+    switch (action) {
       case 'register':
         navigation.navigate('NewBooking');
         break;
@@ -82,12 +101,17 @@ const StaffDashboardScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="light-content" backgroundColor="#1A237E" />
-      
+      <StatusBar barStyle="light-content" backgroundColor={primaryBg} />
+
       {/* Header */}
       <View style={styles.header}>
-        <View style={styles.userInfo}>
-          <Image source={{ uri: user.avatar }} style={styles.avatar} />
+        <TouchableOpacity
+          style={styles.userInfo}
+          onPress={() => navigation.navigate('StaffSettings')}
+        >
+          <View style={styles.avatarContainer}>
+            <Ionicons name="person" size={28} color={textLight} />
+          </View>
           <View>
             <Text style={styles.role}>{user.role}</Text>
             <View style={styles.statusContainer}>
@@ -95,9 +119,12 @@ const StaffDashboardScreen = ({ navigation }) => {
               <Text style={styles.statusText}>{user.status}</Text>
             </View>
           </View>
-        </View>
-        <TouchableOpacity style={styles.notificationButton}>
-          <Ionicons name="notifications" size={24} color="#FFFFFF" />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.notificationButton}
+          onPress={() => navigation.navigate('StaffNotifications')}
+        >
+          <Ionicons name="notifications" size={24} color={textLight} />
           <View style={styles.notificationBadge} />
         </TouchableOpacity>
       </View>
@@ -110,14 +137,14 @@ const StaffDashboardScreen = ({ navigation }) => {
         </View>
 
         {/* Stats Cards */}
-        <ScrollView 
-          horizontal 
+        <ScrollView
+          horizontal
           showsHorizontalScrollIndicator={false}
           style={styles.statsScroll}
         >
           {stats.map((stat) => (
             <View key={stat.id} style={[styles.statCard, { backgroundColor: stat.color }]}>
-              <FontAwesome5 name={stat.icon} size={20} color="#FFFFFF" />
+              <FontAwesome5 name={stat.icon} size={20} color={textLight} />
               <Text style={styles.statValue}>{stat.value}</Text>
               <Text style={styles.statTitle}>{stat.title}</Text>
               {stat.change && (
@@ -132,107 +159,84 @@ const StaffDashboardScreen = ({ navigation }) => {
 
         {/* Quick Actions */}
         <View style={styles.quickActions}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.mainActionButton}
             onPress={() => handleQuickAction('register')}
           >
-            <Ionicons name="person-add" size={24} color="#3B82F6" />
+            <Ionicons name="person-add" size={24} color={accent} />
             <Text style={styles.mainActionText}>Register Guest</Text>
             <Text style={styles.mainActionSubtext}>New walk-in or reservation</Text>
-            <Ionicons name="chevron-forward" size={20} color="#3B82F6" style={styles.arrowIcon} />
+            <Ionicons name="chevron-forward" size={20} color={accent} style={styles.arrowIcon} />
           </TouchableOpacity>
 
           <View style={styles.quickActionRow}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.quickActionButton}
               onPress={() => handleQuickAction('bookings')}
             >
-              <MaterialIcons name="event-note" size={24} color="#3B82F6" />
+              <MaterialIcons name="event-note" size={24} color={accent} />
               <Text style={styles.quickActionText}>Manage Bookings</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity 
-              style={styles.quickActionButton}
-              onPress={() => handleQuickAction('checkin')}
-            >
-              <MaterialCommunityIcons name="view-dashboard" size={24} color="#3B82F6" />
-              <Text style={styles.quickActionText}>Check-in Dashboard</Text>
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.quickActionRow}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.quickActionButton}
               onPress={() => handleQuickAction('rooms')}
             >
-              <Ionicons name="bed" size={24} color="#3B82F6" />
+              <Ionicons name="bed" size={24} color={accent} />
               <Text style={styles.quickActionText}>Room Types</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={styles.quickActionButton}
-              onPress={() => handleQuickAction('staff')}
-            >
-              <Ionicons name="people" size={24} color="#3B82F6" />
-              <Text style={styles.quickActionText}>Staff Directory</Text>
             </TouchableOpacity>
           </View>
         </View>
 
         {/* Recent Activity */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Recent Activity</Text>
-            <TouchableOpacity>
-              <Text style={styles.seeAllText}>See All</Text>
-            </TouchableOpacity>
-          </View>
-          
-          <View style={styles.activityList}>
-            {recentActivities.map((activity) => (
-              <View key={activity.id} style={styles.activityItem}>
-                <View style={[styles.activityIcon, { backgroundColor: `${activity.iconColor}20` }]}>
-                  <MaterialCommunityIcons 
-                    name={activity.icon} 
-                    size={20} 
-                    color={activity.iconColor} 
-                  />
+        {recentActivities && recentActivities.length > 0 && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Recent Activity</Text>
+              <TouchableOpacity>
+                <Text style={styles.seeAllText}>See All</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.activityList}>
+              {recentActivities.map((activity) => (
+                <View key={activity.id} style={styles.activityItem}>
+                  <View style={[styles.activityIcon, { backgroundColor: `${activity.iconColor}20` }]}>
+                    <MaterialCommunityIcons
+                      name={activity.icon}
+                      size={20}
+                      color={activity.iconColor}
+                    />
+                  </View>
+                  <View style={styles.activityContent}>
+                    <Text style={styles.activityTitle}>{activity.title}</Text>
+                    <Text style={styles.activityDetails}>{activity.details}</Text>
+                  </View>
+                  <Text style={styles.activityTime}>{activity.time}</Text>
                 </View>
-                <View style={styles.activityContent}>
-                  <Text style={styles.activityTitle}>{activity.title}</Text>
-                  <Text style={styles.activityDetails}>{activity.details}</Text>
-                </View>
-                <Text style={styles.activityTime}>{activity.time}</Text>
-              </View>
-            ))}
+              ))}
+            </View>
           </View>
-        </View>
+        )}
       </ScrollView>
 
       {/* Bottom Navigation */}
       <View style={styles.bottomNav}>
         <TouchableOpacity style={styles.navButton}>
-          <Ionicons name="home" size={24} color="#3B82F6" />
-          <Text style={styles.navButtonText}>Home</Text>
+          <Ionicons name="home" size={24} color={accent} />
+          <Text style={[styles.navButtonText, { color: accent }]}>Home</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navButton}>
-          <Ionicons name="calendar" size={24} color="#94A3B8" />
-          <Text style={styles.navButtonText}>Schedule</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navButton}>
-          <Ionicons name="chatbubble-ellipses" size={24} color="#94A3B8" />
-          <Text style={styles.navButtonText}>Messages</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navButton}>
-          <Ionicons name="settings" size={24} color="#94A3B8" />
+
+
+
+        <TouchableOpacity
+          style={styles.navButton}
+          onPress={() => navigation.navigate('StaffSettings')}
+        >
+          <Ionicons name="settings" size={24} color={textMuted} />
           <Text style={styles.navButtonText}>Settings</Text>
         </TouchableOpacity>
       </View>
-
-      {/* Floating Action Button */}
-      <TouchableOpacity style={styles.fab}>
-        <Ionicons name="qr-code" size={24} color="#FFFFFF" />
-      </TouchableOpacity>
     </SafeAreaView>
   );
 };
@@ -240,29 +244,32 @@ const StaffDashboardScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: primaryBg,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: '#1A237E',
-    paddingTop: 50,
+    backgroundColor: primaryBg,
+    paddingTop: 45,
     paddingBottom: 20,
   },
   userInfo: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  avatar: {
+  avatarContainer: {
     width: 50,
     height: 50,
     borderRadius: 25,
     marginRight: 12,
+    backgroundColor: accent,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   role: {
-    color: '#E0E0E0',
+    color: textMuted,
     fontSize: 14,
     marginBottom: 4,
   },
@@ -278,7 +285,7 @@ const styles = StyleSheet.create({
     marginRight: 6,
   },
   statusText: {
-    color: '#E0E0E0',
+    color: textMuted,
     fontSize: 12,
   },
   notificationButton: {
@@ -296,7 +303,7 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: primaryBg,
   },
   greetingCard: {
     padding: 16,
@@ -304,12 +311,12 @@ const styles = StyleSheet.create({
   greeting: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#1E293B',
+    color: textLight,
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 14,
-    color: '#64748B',
+    color: textMuted,
   },
   statsScroll: {
     paddingLeft: 16,
@@ -320,30 +327,26 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 12,
     marginRight: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    backgroundColor: cardBg,
   },
   statValue: {
-    color: '#FFFFFF',
+    color: textLight,
     fontSize: 24,
     fontWeight: '700',
     marginTop: 8,
   },
   statTitle: {
-    color: '#E0E0E0',
+    color: textMuted,
     fontSize: 14,
     marginTop: 4,
   },
   statChange: {
-    color: '#FFFFFF',
+    color: textLight,
     fontSize: 12,
     marginTop: 4,
   },
   statStatus: {
-    color: '#FFFFFF',
+    color: textLight,
     fontSize: 12,
     marginTop: 4,
     fontWeight: '600',
@@ -352,24 +355,19 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   mainActionButton: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: cardBg,
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
   },
   mainActionText: {
-    color: '#1E293B',
+    color: textLight,
     fontSize: 16,
     fontWeight: '600',
     marginTop: 12,
   },
   mainActionSubtext: {
-    color: '#64748B',
+    color: textMuted,
     fontSize: 12,
     marginTop: 4,
   },
@@ -386,19 +384,14 @@ const styles = StyleSheet.create({
   },
   quickActionButton: {
     width: '48%',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: cardBg,
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
   },
   quickActionText: {
-    color: '#1E293B',
+    color: textLight,
     fontSize: 12,
     marginTop: 8,
     textAlign: 'center',
@@ -416,28 +409,23 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#1E293B',
+    color: textLight,
   },
   seeAllText: {
-    color: '#3B82F6',
+    color: accent,
     fontSize: 14,
   },
   activityList: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: cardBg,
     borderRadius: 12,
     padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
   },
   activityItem: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    borderBottomColor: 'rgba(255, 255, 255, 0.08)',
   },
   activityIcon: {
     width: 36,
@@ -453,16 +441,16 @@ const styles = StyleSheet.create({
   activityTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#1E293B',
+    color: textLight,
     marginBottom: 2,
   },
   activityDetails: {
     fontSize: 12,
-    color: '#64748B',
+    color: textMuted,
   },
   activityTime: {
     fontSize: 10,
-    color: '#94A3B8',
+    color: textMuted,
     marginLeft: 8,
   },
   bottomNav: {
@@ -470,33 +458,18 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     paddingVertical: 12,
     borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
-    backgroundColor: '#FFFFFF',
+    borderTopColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: primaryBg,
   },
   navButton: {
     alignItems: 'center',
   },
   navButtonText: {
     fontSize: 10,
-    color: '#94A3B8',
+    color: textMuted,
     marginTop: 4,
   },
-  fab: {
-    position: 'absolute',
-    right: 24,
-    bottom: 80,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#3B82F6',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
-  },
+
 });
 
 export default StaffDashboardScreen;

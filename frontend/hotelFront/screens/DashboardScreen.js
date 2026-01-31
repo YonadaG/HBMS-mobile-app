@@ -10,8 +10,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { rooms } from '../data';
 import RoomCard from '../components/RoomCard';
+import { useHotel } from '../context/HotelContext';
 
 const primaryBg = '#0b1420';
 const cardBg = '#0f1f31';
@@ -27,6 +27,7 @@ const services = [
 ];
 
 export default function DashboardScreen({ navigation }) {
+  const { rooms } = useHotel();
   const featuredRoom = rooms[0];
   const exploreRooms = rooms.slice(0, 3);
 
@@ -37,11 +38,11 @@ export default function DashboardScreen({ navigation }) {
       <StatusBar style="light" />
       <ScrollView contentContainerStyle={styles.scroll}>
         <View style={styles.header}>
-          <Ionicons name="menu-outline" size={28} color={textLight} />
+          <View style={{ width: 28 }} />
           <Text style={styles.headerTitle}>Selam Hotel</Text>
-          <TouchableOpacity 
-            style={styles.avatar} 
-            onPress={() => navigation.navigate('LoginScreen')}
+          <TouchableOpacity
+            style={styles.avatar}
+            onPress={() => navigation.navigate('GuestSettings')}
           >
             <Ionicons name="person" size={18} color={primaryBg} />
           </TouchableOpacity>
@@ -57,7 +58,7 @@ export default function DashboardScreen({ navigation }) {
               style={styles.bookingImage}
             />
             <View style={styles.bookingContent}>
-              
+
               <Text style={styles.roomName}>{featuredRoom.roomType}</Text>
               <Text style={styles.bookingMeta}>
                 Check-in: Oct 26 | Check-out: Oct 30
@@ -121,7 +122,7 @@ const styles = StyleSheet.create({
   },
   scroll: {
     paddingHorizontal: 18,
-    paddingTop: 20,
+    paddingTop: 45,
     paddingBottom: 24,
   },
   header: {

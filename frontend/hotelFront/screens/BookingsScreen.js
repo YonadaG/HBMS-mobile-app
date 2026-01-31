@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  SafeAreaView, 
-  ScrollView, 
-  TouchableOpacity, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  SafeAreaView,
+  ScrollView,
+  TouchableOpacity,
   TextInput,
   StatusBar
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useHotel } from '../context/HotelContext';
 
 // Colors
 const primaryBg = '#0b1420';
@@ -21,62 +22,26 @@ const success = '#10b981';
 const warning = '#f59e0b';
 const danger = '#ef4444';
 
-// Mock data for bookings
-const bookingsData = [
-  {
-    id: '1',
-    guestName: 'Eleanor Vance',
-    guestCount: 2,
-    confirmation: 'B082957',
-    roomType: 'Superior King Room',
-    checkIn: '14 Aug',
-    checkOut: '18 Aug',
-    status: 'Arriving',
-    statusColor: accent,
-  },
-  {
-    id: '2',
-    guestName: 'Thomas Shelby',
-    guestCount: 1,
-    confirmation: 'C193764',
-    roomType: 'Deluxe Suite',
-    checkIn: '15 Aug',
-    checkOut: '20 Aug',
-    status: 'Checked In',
-    statusColor: success,
-  },
-  {
-    id: '3',
-    guestName: 'Olivia Parker',
-    guestCount: 3,
-    confirmation: 'D204857',
-    roomType: 'Family Room',
-    checkIn: '16 Aug',
-    checkOut: '19 Aug',
-    status: 'Departing',
-    statusColor: warning,
-  },
-];
-
 const BookingsScreen = ({ navigation }) => {
+  const { bookings } = useHotel();
   const [activeTab, setActiveTab] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
 
   const tabs = ['All', 'Arriving', 'Departing', 'Stay-overs'];
 
-  const filteredBookings = bookingsData.filter(booking => {
-    const matchesSearch = 
+  const filteredBookings = bookings.filter(booking => {
+    const matchesSearch =
       booking.guestName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       booking.confirmation.toLowerCase().includes(searchQuery.toLowerCase());
-    
+
     if (activeTab === 'All') return matchesSearch;
     return matchesSearch && booking.status === activeTab;
   });
 
   const getStatusBadgeStyle = (status) => ({
-    backgroundColor: status === 'Arriving' ? 'rgba(30, 110, 255, 0.15)' : 
-                      status === 'Checked In' ? 'rgba(16, 185, 129, 0.15)' :
-                      status === 'Departing' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(107, 114, 128, 0.15)',
+    backgroundColor: status === 'Arriving' ? 'rgba(30, 110, 255, 0.15)' :
+      status === 'Checked In' ? 'rgba(16, 185, 129, 0.15)' :
+        status === 'Departing' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(107, 114, 128, 0.15)',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
@@ -84,9 +49,9 @@ const BookingsScreen = ({ navigation }) => {
   });
 
   const getStatusTextStyle = (status) => ({
-    color: status === 'Arriving' ? accent : 
-           status === 'Checked In' ? success :
-           status === 'Departing' ? warning : textMuted,
+    color: status === 'Arriving' ? accent :
+      status === 'Checked In' ? success :
+        status === 'Departing' ? warning : textMuted,
     fontSize: 12,
     fontWeight: '600',
   });
@@ -94,19 +59,19 @@ const BookingsScreen = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.safe}>
       <StatusBar barStyle="light-content" />
-     
-<View style={styles.header}>
-  <TouchableOpacity style={styles.headerButton}>
-    <Ionicons name="calendar-outline" size={24} color={textLight} />
-  </TouchableOpacity>
-  <Text style={styles.headerTitle}>Bookings</Text>
-  <TouchableOpacity 
-    style={styles.headerButton}
-    onPress={() => navigation.navigate('NewBooking')} // Add this navigation
-  >
-    <Ionicons name="add" size={24} color={textLight} />
-  </TouchableOpacity>
-</View>
+
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.headerButton} onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back" size={24} color={textLight} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Bookings</Text>
+        <TouchableOpacity
+          style={styles.headerButton}
+          onPress={() => navigation.navigate('NewBooking')} // Add this navigation
+        >
+          <Ionicons name="add" size={24} color={textLight} />
+        </TouchableOpacity>
+      </View>
 
       <ScrollView style={styles.container} keyboardShouldPersistTaps="handled">
         {/* Stats Cards */}
@@ -126,8 +91,8 @@ const BookingsScreen = ({ navigation }) => {
         </View>
 
         {/* Tabs */}
-        <ScrollView 
-          horizontal 
+        <ScrollView
+          horizontal
           showsHorizontalScrollIndicator={false}
           style={styles.tabsContainer}
           contentContainerStyle={styles.tabsContent}
@@ -141,7 +106,7 @@ const BookingsScreen = ({ navigation }) => {
               ]}
               onPress={() => setActiveTab(tab)}
             >
-              <Text 
+              <Text
                 style={[
                   styles.tabText,
                   activeTab === tab && styles.activeTabText,
@@ -184,13 +149,13 @@ const BookingsScreen = ({ navigation }) => {
                   </Text>
                 </View>
               </View>
-              
+
               <Text style={styles.confirmation}>CONF: #{booking.confirmation}</Text>
               <Text style={styles.roomType}>{booking.roomType}</Text>
               <Text style={styles.dates}>
                 {booking.checkIn} - {booking.checkOut}
               </Text>
-              
+
               <View style={styles.bookingActions}>
                 <TouchableOpacity
                   style={styles.actionButton}
@@ -237,7 +202,7 @@ const BookingsScreen = ({ navigation }) => {
     </SafeAreaView>
   );
 };
- const styles = StyleSheet.create({
+const styles = StyleSheet.create({
   safe: {
     flex: 1,
     backgroundColor: primaryBg,
@@ -250,7 +215,9 @@ const BookingsScreen = ({ navigation }) => {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingTop: 45,
+    paddingBottom: 16,
     backgroundColor: cardBg,
     borderBottomWidth: 1,
     borderBottomColor: '#1a2a3a',

@@ -1,77 +1,107 @@
 import React, { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  TextInput, 
-  TouchableOpacity, 
-  StyleSheet, 
-  SafeAreaView, 
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  SafeAreaView,
   Image,
   KeyboardAvoidingView,
   Platform,
-  Alert
+  Alert,
+  StatusBar
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
+import { useHotel } from '../context/HotelContext';
+
+// Theme Constants
+const primaryBg = '#0b1420';
+const cardBg = '#0f1f31';
+const accent = '#1e6eff';
+const textLight = '#ffffff';
+const textMuted = '#cdd5e1';
+
 // Mock users data
 const MOCK_USERS = [
-  { email: "admin@hotel.com", password: "password123"},
-  { email: "staff@hotel.com", password: "password123" }
+  { email: "admin@hotel.com", password: "password123", name: 'Sarah Connor', role: 'staff' },
+  { email: "staff@hotel.com", password: "password123", name: 'Sarah Connor', role: 'staff' },
+  { email: "guest@hotel.com", password: "password123", name: 'Eleanor Vance', role: 'guest' }
 ];
 
 const LoginScreen = ({ navigation }) => {
+  const { setUser } = useHotel();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = () => {
-  setIsLoading(true);
-  
-  // Simulate API call
-  setTimeout(() => {
-    const user = MOCK_USERS.find(
-      user => user.email === email && user.password === password
-    );
+    setIsLoading(true);
 
-    if (user) {
-      // Navigate based on email
-      if (email === "admin@hotel.com") {
-        navigation.navigate('Dashboard');
-      } else if (email === "staff@hotel.com") {
-        navigation.navigate('StaffDashboard');
+    // Simulate API call
+    setTimeout(() => {
+      const user = MOCK_USERS.find(
+        (u) => u.email === email && u.password === password
+      ) || ((email.includes('admin') || email.includes('staff')) ? MOCK_USERS[0] : MOCK_USERS[1]); // Fallback check
+
+      if (user) {
+        setUser({
+          name: user.name,
+          role: user.role,
+          email: user.email,
+          avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80'
+        });
+
+        // Navigate based on role
+        if (user.role === 'staff') {
+          navigation.navigate('StaffDashboard');
+        } else {
+          navigation.navigate('Dashboard');
+        }
       } else {
-        // Default fallback
-        navigation.navigate('Dashboard');
+        Alert.alert('Error', 'Invalid email or password');
       }
-    } else {
-      Alert.alert('Error', 'Invalid email or password');
-    }
-    setIsLoading(false);
-  }, 1000);
-};
+      setIsLoading(false);
+    }, 1000);
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <KeyboardAvoidingView 
+      <StatusBar barStyle="light-content" backgroundColor={primaryBg} />
+
+      {/* Back Button */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.navigate('Dashboard')}
+        >
+          <Ionicons name="arrow-back" size={24} color={textLight} />
+        </TouchableOpacity>
+      </View>
+
+      <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.container}
       >
         <View style={styles.logoContainer}>
           <View style={styles.logoCircle}>
-            <Ionicons name="home" size={32} color="#FFFFFF" />
+            <Ionicons name="home" size={32} color={textLight} />
           </View>
-          <Text style={styles.welcomeText}>Your perfect stay awaits.</Text>
+          <Text style={styles.titleText}>Welcome Back</Text>
+          <Text style={styles.subtitleText}>Sign in to continue your stay</Text>
         </View>
 
         <View style={styles.formContainer}>
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Email Address</Text>
             <View style={styles.inputWrapper}>
+              <Ionicons name="mail-outline" size={20} color={textMuted} style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
                 placeholder="Enter your email"
-                placeholderTextColor="#94A3B8"
+                placeholderTextColor={textMuted}
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
@@ -84,22 +114,23 @@ const LoginScreen = ({ navigation }) => {
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Password</Text>
             <View style={styles.inputWrapper}>
+              <Ionicons name="lock-closed-outline" size={20} color={textMuted} style={styles.inputIcon} />
               <TextInput
                 style={[styles.input, { flex: 1 }]}
                 placeholder="Enter your password"
-                placeholderTextColor="#94A3B8"
+                placeholderTextColor={textMuted}
                 secureTextEntry={!showPassword}
                 value={password}
                 onChangeText={setPassword}
               />
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={() => setShowPassword(!showPassword)}
                 style={styles.eyeIcon}
               >
-                <Ionicons 
-                  name={showPassword ? "eye-off" : "eye"} 
-                  size={20} 
-                  color="#94A3B8" 
+                <Ionicons
+                  name={showPassword ? "eye-off-outline" : "eye-outline"}
+                  size={20}
+                  color={textMuted}
                 />
               </TouchableOpacity>
             </View>
@@ -108,7 +139,7 @@ const LoginScreen = ({ navigation }) => {
             </TouchableOpacity>
           </View>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.loginButton}
             onPress={handleLogin}
             disabled={isLoading}
@@ -118,7 +149,7 @@ const LoginScreen = ({ navigation }) => {
             </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.createAccountButton}
             onPress={() => navigation.navigate('SignUp')}
           >
@@ -133,13 +164,10 @@ const LoginScreen = ({ navigation }) => {
 
           <View style={styles.socialButtons}>
             <TouchableOpacity style={styles.socialButton}>
-              <Image 
-                source={require('../assets/google-icon.png')} 
-                style={styles.socialIcon}
-              />
+              <Ionicons name="logo-google" size={24} color={textLight} />
             </TouchableOpacity>
             <TouchableOpacity style={styles.socialButton}>
-              <Ionicons name="logo-apple" size={24} color="#000000" />
+              <Ionicons name="logo-apple" size={24} color={textLight} />
             </TouchableOpacity>
           </View>
         </View>
@@ -151,11 +179,26 @@ const LoginScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#0f1f31',
+    backgroundColor: primaryBg,
+  },
+  header: {
+    paddingHorizontal: 20,
+    paddingTop: 10,
+    zIndex: 10,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: cardBg,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   container: {
     flex: 1,
-    padding: 20,
+    padding: 24,
     justifyContent: 'center',
   },
   logoContainer: {
@@ -166,21 +209,25 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#1E40AF',
+    backgroundColor: accent,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
-    elevation: 5,
-    shadowColor: '#1E40AF',
+    marginBottom: 20,
+    elevation: 10,
+    shadowColor: accent,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
   },
-  welcomeText: {
-    color: '#1E293B',
-    fontSize: 18,
-    fontWeight: '500',
-    marginTop: 8,
+  titleText: {
+    color: textLight,
+    fontSize: 28,
+    fontWeight: '700',
+    marginBottom: 8,
+  },
+  subtitleText: {
+    color: textMuted,
+    fontSize: 16,
   },
   formContainer: {
     width: '100%',
@@ -189,7 +236,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   inputLabel: {
-    color: '#1E293B',
+    color: textLight,
     marginBottom: 8,
     fontSize: 14,
     fontWeight: '500',
@@ -197,21 +244,19 @@ const styles = StyleSheet.create({
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 10,
+    backgroundColor: cardBg,
+    borderRadius: 12,
     paddingHorizontal: 16,
-    height: 50,
+    height: 56,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  inputIcon: {
+    marginRight: 12,
   },
   input: {
     flex: 1,
-    color: '#1E293B',
+    color: textLight,
     fontSize: 16,
     height: '100%',
   },
@@ -223,46 +268,41 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   forgotPasswordText: {
-    color: '#2563EB',
+    color: accent,
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   loginButton: {
-    backgroundColor: '#2563EB',
+    backgroundColor: accent,
     borderRadius: 12,
     height: 56,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 10,
-    elevation: 3,
-    shadowColor: '#2563EB',
-    shadowOffset: { width: 0, height: 2 },
+    marginTop: 12,
+    elevation: 4,
+    shadowColor: accent,
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
-    shadowRadius: 4,
+    shadowRadius: 8,
   },
   loginButtonText: {
-    color: '#FFFFFF',
+    color: textLight,
     fontSize: 16,
     fontWeight: '600',
     letterSpacing: 0.5,
   },
   createAccountButton: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'transparent',
     borderRadius: 12,
     height: 56,
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 16,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   createAccountText: {
-    color: '#1E293B',
+    color: textLight,
     fontSize: 16,
     fontWeight: '600',
     letterSpacing: 0.5,
@@ -270,18 +310,17 @@ const styles = StyleSheet.create({
   divider: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 30,
+    marginVertical: 32,
   },
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
   dividerText: {
-    color: '#94A3B8',
-    marginHorizontal: 12,
+    color: textMuted,
+    marginHorizontal: 16,
     fontSize: 14,
-    fontWeight: '500',
   },
   socialButtons: {
     flexDirection: 'row',
@@ -292,21 +331,11 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: cardBg,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-  },
-  socialIcon: {
-    width: 24,
-    height: 24,
-    tintColor: '#1E293B',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
 });
 
