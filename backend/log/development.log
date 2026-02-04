@@ -1,0 +1,133 @@
+  [1m[35mSQL (0.4ms)[0m  [1m[35mSET search_path TO public /*application='Backend'*/[0m
+  [1m[35m (199.5ms)[0m  [1m[35mCREATE DATABASE "backend_development" ENCODING = 'unicode' /*application='Backend'*/[0m
+  [1m[35mSQL (0.1ms)[0m  [1m[35mSET search_path TO public /*application='Backend'*/[0m
+  [1m[35m (59.1ms)[0m  [1m[35mCREATE DATABASE "backend_test" ENCODING = 'unicode' /*application='Backend'*/[0m
+  [1m[35m (3.5ms)[0m  [1m[35mCREATE TABLE "schema_migrations" ("version" character varying NOT NULL PRIMARY KEY) /*application='Backend'*/[0m
+  [1m[35m (1.4ms)[0m  [1m[35mCREATE TABLE "ar_internal_metadata" ("key" character varying NOT NULL PRIMARY KEY, "value" character varying, "created_at" timestamp(6) NOT NULL, "updated_at" timestamp(6) NOT NULL) /*application='Backend'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[34mSELECT pg_try_advisory_lock(5073945470573576205) /*application='Backend'*/[0m
+  [1m[36mActiveRecord::SchemaMigration Load (0.4ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='Backend'*/[0m
+  [1m[36mActiveRecord::InternalMetadata Load (0.4ms)[0m  [1m[34mSELECT * FROM "ar_internal_metadata" WHERE "ar_internal_metadata"."key" = 'environment' ORDER BY "ar_internal_metadata"."key" ASC LIMIT 1 /*application='Backend'*/[0m
+  [1m[36mActiveRecord::InternalMetadata Create (0.6ms)[0m  [1m[32mINSERT INTO "ar_internal_metadata" ("key", "value", "created_at", "updated_at") VALUES ('environment', 'development', '2026-02-04 20:25:18.424461', '2026-02-04 20:25:18.424465') RETURNING "key" /*application='Backend'*/[0m
+Migrating to CreateUsers (20260204201902)
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mBEGIN /*application='Backend'*/[0m
+  [1m[35m (4.2ms)[0m  [1m[35mCREATE TABLE "users" ("id" bigserial primary key, "email" character varying NOT NULL, "password_digest" character varying NOT NULL, "name" character varying NOT NULL, "role" character varying DEFAULT 'guest' NOT NULL, "created_at" timestamp(6) NOT NULL, "updated_at" timestamp(6) NOT NULL) /*application='Backend'*/[0m
+  [1m[35m (0.5ms)[0m  [1m[35mCREATE UNIQUE INDEX "index_users_on_email" ON "users" ("email") /*application='Backend'*/[0m
+  [1m[36mActiveRecord::SchemaMigration Create (0.1ms)[0m  [1m[32mINSERT INTO "schema_migrations" ("version") VALUES ('20260204201902') RETURNING "version" /*application='Backend'*/[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT /*application='Backend'*/[0m
+Migrating to CreateRoomTypes (20260204202152)
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*application='Backend'*/[0m
+  [1m[35m (2.0ms)[0m  [1m[35mCREATE TABLE "room_types" ("id" bigserial primary key, "name" character varying NOT NULL, "price" decimal(10,2) NOT NULL, "max_guests" integer NOT NULL, "image" character varying, "description" text, "created_at" timestamp(6) NOT NULL, "updated_at" timestamp(6) NOT NULL) /*application='Backend'*/[0m
+  [1m[35m (0.3ms)[0m  [1m[35mCREATE UNIQUE INDEX "index_room_types_on_name" ON "room_types" ("name") /*application='Backend'*/[0m
+  [1m[36mActiveRecord::SchemaMigration Create (0.1ms)[0m  [1m[32mINSERT INTO "schema_migrations" ("version") VALUES ('20260204202152') RETURNING "version" /*application='Backend'*/[0m
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mCOMMIT /*application='Backend'*/[0m
+Migrating to CreateRooms (20260204202154)
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*application='Backend'*/[0m
+  [1m[35m (2.1ms)[0m  [1m[35mCREATE TABLE "rooms" ("id" bigserial primary key, "room_no" character varying NOT NULL, "room_type_id" bigint NOT NULL, "bed_type" character varying NOT NULL, "size" integer NOT NULL, "description" text, "floor_no" integer NOT NULL, "price_per_night" decimal(10,2) NOT NULL, "status" character varying DEFAULT 'available' NOT NULL, "amenities" json DEFAULT '[]', "images" json DEFAULT '[]', "created_at" timestamp(6) NOT NULL, "updated_at" timestamp(6) NOT NULL, CONSTRAINT "fk_rails_f4fff90e9d"
+FOREIGN KEY ("room_type_id")
+  REFERENCES "room_types" ("id")
+) /*application='Backend'*/[0m
+  [1m[35m (0.3ms)[0m  [1m[35mCREATE INDEX "index_rooms_on_room_type_id" ON "rooms" ("room_type_id") /*application='Backend'*/[0m
+  [1m[35m (0.3ms)[0m  [1m[35mCREATE UNIQUE INDEX "index_rooms_on_room_no" ON "rooms" ("room_no") /*application='Backend'*/[0m
+  [1m[35m (44.7ms)[0m  [1m[35mCREATE INDEX "index_rooms_on_status" ON "rooms" ("status") /*application='Backend'*/[0m
+  [1m[36mActiveRecord::SchemaMigration Create (0.3ms)[0m  [1m[32mINSERT INTO "schema_migrations" ("version") VALUES ('20260204202154') RETURNING "version" /*application='Backend'*/[0m
+  [1m[36mTRANSACTION (0.5ms)[0m  [1m[35mCOMMIT /*application='Backend'*/[0m
+Migrating to CreateBookings (20260204202157)
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mBEGIN /*application='Backend'*/[0m
+  [1m[35m (3.2ms)[0m  [1m[35mCREATE TABLE "bookings" ("id" bigserial primary key, "user_id" bigint NOT NULL, "guest_name" character varying NOT NULL, "guest_count" integer NOT NULL, "confirmation" character varying NOT NULL, "room_type_id" bigint NOT NULL, "room_id" bigint, "check_in" date NOT NULL, "check_out" date NOT NULL, "status" character varying DEFAULT 'confirmed' NOT NULL, "price" decimal(10,2) NOT NULL, "authorize_card" boolean DEFAULT FALSE, "created_at" timestamp(6) NOT NULL, "updated_at" timestamp(6) NOT NULL, CONSTRAINT "fk_rails_ef0571f117"
+FOREIGN KEY ("user_id")
+  REFERENCES "users" ("id")
+, CONSTRAINT "fk_rails_dedb8e6580"
+FOREIGN KEY ("room_type_id")
+  REFERENCES "room_types" ("id")
+, CONSTRAINT "fk_rails_4fe21eabc6"
+FOREIGN KEY ("room_id")
+  REFERENCES "rooms" ("id")
+) /*application='Backend'*/[0m
+  [1m[35m (0.7ms)[0m  [1m[35mCREATE INDEX "index_bookings_on_user_id" ON "bookings" ("user_id") /*application='Backend'*/[0m
+  [1m[35m (1.1ms)[0m  [1m[35mCREATE INDEX "index_bookings_on_room_type_id" ON "bookings" ("room_type_id") /*application='Backend'*/[0m
+  [1m[35m (0.6ms)[0m  [1m[35mCREATE INDEX "index_bookings_on_room_id" ON "bookings" ("room_id") /*application='Backend'*/[0m
+  [1m[35m (0.9ms)[0m  [1m[35mCREATE UNIQUE INDEX "index_bookings_on_confirmation" ON "bookings" ("confirmation") /*application='Backend'*/[0m
+  [1m[35m (1.0ms)[0m  [1m[35mCREATE INDEX "index_bookings_on_check_in_and_check_out" ON "bookings" ("check_in", "check_out") /*application='Backend'*/[0m
+  [1m[35m (0.8ms)[0m  [1m[35mCREATE INDEX "index_bookings_on_status" ON "bookings" ("status") /*application='Backend'*/[0m
+  [1m[36mActiveRecord::SchemaMigration Create (0.1ms)[0m  [1m[32mINSERT INTO "schema_migrations" ("version") VALUES ('20260204202157') RETURNING "version" /*application='Backend'*/[0m
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mCOMMIT /*application='Backend'*/[0m
+  [1m[35m (0.3ms)[0m  [1m[34mSELECT pg_advisory_unlock(5073945470573576205) /*application='Backend'*/[0m
+  [1m[36mActiveRecord::SchemaMigration Load (0.1ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='Backend'*/[0m
+  [1m[35mSQL (0.1ms)[0m  [1m[35mSET search_path TO public /*application='Backend'*/[0m
+  [1m[35mSQL (0.1ms)[0m  [1m[35mSET search_path TO "$user", public /*application='Backend'*/[0m
+  [1m[35mSQL (0.1ms)[0m  [1m[35mSET search_path TO public /*application='Backend'*/[0m
+  [1m[35mSQL (0.1ms)[0m  [1m[35mSET search_path TO "$user", public /*application='Backend'*/[0m
+  [1m[36mActiveRecord::SchemaMigration Load (0.6ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='Backend'*/[0m
+  [1m[36mBooking Load (1.4ms)[0m  [1m[34mSELECT "bookings".* FROM "bookings" /*application='Backend'*/[0m
+  [1m[36mRoom Load (1.1ms)[0m  [1m[34mSELECT "rooms".* FROM "rooms" /*application='Backend'*/[0m
+  [1m[36mRoomType Load (1.1ms)[0m  [1m[34mSELECT "room_types".* FROM "room_types" /*application='Backend'*/[0m
+  [1m[36mUser Load (0.4ms)[0m  [1m[34mSELECT "users".* FROM "users" /*application='Backend'*/[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*application='Backend'*/[0m
+  [1m[36mUser Exists? (1.5ms)[0m  [1m[34mSELECT 1 AS one FROM "users" WHERE "users"."email" = 'staff@hotel.com' LIMIT 1 /*application='Backend'*/[0m
+  [1m[36mUser Create (0.6ms)[0m  [1m[32mINSERT INTO "users" ("email", "password_digest", "name", "role", "created_at", "updated_at") VALUES ('staff@hotel.com', '$2a$12$OOMg1MhZ51gkQ0p6ZCDli.47vZKGjdcnV31TpC6/2aIjZGYZuCuG6', 'Sarah Connor', 'staff', '2026-02-04 20:31:26.665951', '2026-02-04 20:31:26.665951') RETURNING "id" /*application='Backend'*/[0m
+  [1m[36mTRANSACTION (0.5ms)[0m  [1m[35mCOMMIT /*application='Backend'*/[0m
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN /*application='Backend'*/[0m
+  [1m[36mUser Exists? (1.4ms)[0m  [1m[34mSELECT 1 AS one FROM "users" WHERE "users"."email" = 'guest@hotel.com' LIMIT 1 /*application='Backend'*/[0m
+  [1m[36mUser Create (0.3ms)[0m  [1m[32mINSERT INTO "users" ("email", "password_digest", "name", "role", "created_at", "updated_at") VALUES ('guest@hotel.com', '$2a$12$xN8CK7Xvufpj8dU5nYVbN.PI3ePMgAbmE7jnT3Rml15.TL.h7aLii', 'Eleanor Vance', 'guest', '2026-02-04 20:31:27.036481', '2026-02-04 20:31:27.036481') RETURNING "id" /*application='Backend'*/[0m
+  [1m[36mTRANSACTION (0.8ms)[0m  [1m[35mCOMMIT /*application='Backend'*/[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*application='Backend'*/[0m
+  [1m[36mRoomType Exists? (1.0ms)[0m  [1m[34mSELECT 1 AS one FROM "room_types" WHERE "room_types"."name" = 'Deluxe Room' LIMIT 1 /*application='Backend'*/[0m
+  [1m[36mRoomType Create (2.0ms)[0m  [1m[32mINSERT INTO "room_types" ("name", "price", "max_guests", "image", "description", "created_at", "updated_at") VALUES ('Deluxe Room', 120.0, 2, 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80', 'Cozy and comfortable, perfect for solo travelers or couples.', '2026-02-04 20:31:27.045998', '2026-02-04 20:31:27.045998') RETURNING "id" /*application='Backend'*/[0m
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mCOMMIT /*application='Backend'*/[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*application='Backend'*/[0m
+  [1m[36mRoomType Exists? (0.9ms)[0m  [1m[34mSELECT 1 AS one FROM "room_types" WHERE "room_types"."name" = 'Standard Room' LIMIT 1 /*application='Backend'*/[0m
+  [1m[36mRoomType Create (0.2ms)[0m  [1m[32mINSERT INTO "room_types" ("name", "price", "max_guests", "image", "description", "created_at", "updated_at") VALUES ('Standard Room', 80.0, 2, 'https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&w=1200&q=80', 'Comfortable standard room suitable for budget travelers.', '2026-02-04 20:31:27.051392', '2026-02-04 20:31:27.051392') RETURNING "id" /*application='Backend'*/[0m
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mCOMMIT /*application='Backend'*/[0m
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN /*application='Backend'*/[0m
+  [1m[36mRoomType Exists? (1.2ms)[0m  [1m[34mSELECT 1 AS one FROM "room_types" WHERE "room_types"."name" = 'Executive Suite' LIMIT 1 /*application='Backend'*/[0m
+  [1m[36mRoomType Create (0.3ms)[0m  [1m[32mINSERT INTO "room_types" ("name", "price", "max_guests", "image", "description", "created_at", "updated_at") VALUES ('Executive Suite', 250.0, 3, 'https://images.unsplash.com/photo-1501117716987-c8e1ecb210af?auto=format&fit=crop&w=1200&q=80', 'Luxury suite with separate living area and premium amenities.', '2026-02-04 20:31:27.069335', '2026-02-04 20:31:27.069335') RETURNING "id" /*application='Backend'*/[0m
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mCOMMIT /*application='Backend'*/[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*application='Backend'*/[0m
+  [1m[36mRoomType Exists? (0.9ms)[0m  [1m[34mSELECT 1 AS one FROM "room_types" WHERE "room_types"."name" = 'Family Room' LIMIT 1 /*application='Backend'*/[0m
+  [1m[36mRoomType Create (0.2ms)[0m  [1m[32mINSERT INTO "room_types" ("name", "price", "max_guests", "image", "description", "created_at", "updated_at") VALUES ('Family Room', 180.0, 5, 'https://images.unsplash.com/photo-1559599101-7466dbdf4e7d?auto=format&fit=crop&w=1200&q=80', 'Spacious room designed for families with children.', '2026-02-04 20:31:27.072709', '2026-02-04 20:31:27.072709') RETURNING "id" /*application='Backend'*/[0m
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mCOMMIT /*application='Backend'*/[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*application='Backend'*/[0m
+  [1m[36mRoomType Exists? (0.9ms)[0m  [1m[34mSELECT 1 AS one FROM "room_types" WHERE "room_types"."name" = 'Junior Suite' LIMIT 1 /*application='Backend'*/[0m
+  [1m[36mRoomType Create (0.3ms)[0m  [1m[32mINSERT INTO "room_types" ("name", "price", "max_guests", "image", "description", "created_at", "updated_at") VALUES ('Junior Suite', 200.0, 4, 'https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&w=1200&q=80', 'Junior suite offering extra space and comfort.', '2026-02-04 20:31:27.077021', '2026-02-04 20:31:27.077021') RETURNING "id" /*application='Backend'*/[0m
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mCOMMIT /*application='Backend'*/[0m
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN /*application='Backend'*/[0m
+  [1m[36mRoom Exists? (2.1ms)[0m  [1m[34mSELECT 1 AS one FROM "rooms" WHERE "rooms"."room_no" = '101' LIMIT 1 /*application='Backend'*/[0m
+  [1m[36mRoom Create (2.6ms)[0m  [1m[32mINSERT INTO "rooms" ("room_no", "room_type_id", "bed_type", "size", "description", "floor_no", "price_per_night", "status", "amenities", "images", "created_at", "updated_at") VALUES ('101', 1, 'Queen Bed', 25, 'Cozy and comfortable, perfect for solo travelers or couples looking for a quick city stay.', 1, 120.0, 'available', '["Wi-Fi","A/C","Smart TV","Coffee Maker"]', '["https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80","https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&w=1200&q=80"]', '2026-02-04 20:31:27.095152', '2026-02-04 20:31:27.095152') RETURNING "id" /*application='Backend'*/[0m
+  [1m[36mTRANSACTION (0.4ms)[0m  [1m[35mCOMMIT /*application='Backend'*/[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*application='Backend'*/[0m
+  [1m[36mRoom Exists? (1.2ms)[0m  [1m[34mSELECT 1 AS one FROM "rooms" WHERE "rooms"."room_no" = '203' LIMIT 1 /*application='Backend'*/[0m
+  [1m[36mRoom Create (0.4ms)[0m  [1m[32mINSERT INTO "rooms" ("room_no", "room_type_id", "bed_type", "size", "description", "floor_no", "price_per_night", "status", "amenities", "images", "created_at", "updated_at") VALUES ('203', 3, 'King Bed', 55, 'Executive suite with separate living area, luxury bathroom, and balcony.', 2, 250.0, 'booked', '["Wi-Fi","A/C","Smart TV","King Bed","Balcony","Pool View","Coffee Maker"]', '["https://images.unsplash.com/photo-1501117716987-c8e1ecb210af?auto=format&fit=crop&w=1200&q=80","https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&w=1200&q=80"]', '2026-02-04 20:31:27.101732', '2026-02-04 20:31:27.101732') RETURNING "id" /*application='Backend'*/[0m
+  [1m[36mTRANSACTION (0.5ms)[0m  [1m[35mCOMMIT /*application='Backend'*/[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*application='Backend'*/[0m
+  [1m[36mRoom Exists? (0.8ms)[0m  [1m[34mSELECT 1 AS one FROM "rooms" WHERE "rooms"."room_no" = '305' LIMIT 1 /*application='Backend'*/[0m
+  [1m[36mRoom Create (0.3ms)[0m  [1m[32mINSERT INTO "rooms" ("room_no", "room_type_id", "bed_type", "size", "description", "floor_no", "price_per_night", "status", "amenities", "images", "created_at", "updated_at") VALUES ('305', 2, 'Queen Bed', 28, 'Comfortable standard room suitable for solo travelers or couples.', 3, 80.0, 'available', '["Wi-Fi","A/C","Queen Bed"]', '["https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&w=1200&q=80"]', '2026-02-04 20:31:27.105384', '2026-02-04 20:31:27.105384') RETURNING "id" /*application='Backend'*/[0m
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mCOMMIT /*application='Backend'*/[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*application='Backend'*/[0m
+  [1m[36mRoom Exists? (0.9ms)[0m  [1m[34mSELECT 1 AS one FROM "rooms" WHERE "rooms"."room_no" = '410' LIMIT 1 /*application='Backend'*/[0m
+  [1m[36mRoom Create (0.3ms)[0m  [1m[32mINSERT INTO "rooms" ("room_no", "room_type_id", "bed_type", "size", "description", "floor_no", "price_per_night", "status", "amenities", "images", "created_at", "updated_at") VALUES ('410', 4, '2 Queen Beds', 50, 'Large family room with extra beds and child-friendly amenities.', 4, 180.0, 'maintenance', '["Wi-Fi","A/C","Smart TV","2 Queen Beds","Coffee Maker"]', '["https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&w=1200&q=80"]', '2026-02-04 20:31:27.108704', '2026-02-04 20:31:27.108704') RETURNING "id" /*application='Backend'*/[0m
+  [1m[36mTRANSACTION (0.5ms)[0m  [1m[35mCOMMIT /*application='Backend'*/[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*application='Backend'*/[0m
+  [1m[36mRoom Exists? (1.0ms)[0m  [1m[34mSELECT 1 AS one FROM "rooms" WHERE "rooms"."room_no" = '501' LIMIT 1 /*application='Backend'*/[0m
+  [1m[36mRoom Create (0.4ms)[0m  [1m[32mINSERT INTO "rooms" ("room_no", "room_type_id", "bed_type", "size", "description", "floor_no", "price_per_night", "status", "amenities", "images", "created_at", "updated_at") VALUES ('501', 5, 'King Bed', 40, 'Junior suite offering extra space and comfort with a sitting area.', 5, 200.0, 'available', '["Wi-Fi","A/C","Smart TV","King Bed","Coffee Maker","Mini Bar"]', '["https://images.unsplash.com/photo-1578683010236-d716f9a3f461?auto=format&fit=crop&w=1200&q=80","https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&w=1200&q=80"]', '2026-02-04 20:31:27.112400', '2026-02-04 20:31:27.112400') RETURNING "id" /*application='Backend'*/[0m
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mCOMMIT /*application='Backend'*/[0m
+  [1m[36mRoom Load (0.2ms)[0m  [1m[34mSELECT "rooms".* FROM "rooms" WHERE "rooms"."room_no" = '305' LIMIT 1 /*application='Backend'*/[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*application='Backend'*/[0m
+  ↳ app/models/booking.rb:43:in `block in generate_confirmation_code'
+  [1m[36mBooking Exists? (0.8ms)[0m  [1m[34mSELECT 1 AS one FROM "bookings" WHERE "bookings"."confirmation" = 'G0RSQFT' LIMIT 1 /*application='Backend'*/[0m
+  ↳ app/models/booking.rb:43:in `block in generate_confirmation_code'
+  [1m[36mBooking Create (1.1ms)[0m  [1m[32mINSERT INTO "bookings" ("user_id", "guest_name", "guest_count", "confirmation", "room_type_id", "room_id", "check_in", "check_out", "status", "price", "authorize_card", "created_at", "updated_at") VALUES (2, 'Eleanor Vance', 2, 'G0RSQFT', 3, NULL, '2026-02-05', '2026-02-09', 'Arriving', 1100.0, TRUE, '2026-02-04 20:31:27.120697', '2026-02-04 20:31:27.120697') RETURNING "id" /*application='Backend'*/[0m
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mCOMMIT /*application='Backend'*/[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*application='Backend'*/[0m
+  ↳ app/models/room.rb:24:in `available_for_dates?'
+  [1m[36mBooking Exists? (1.3ms)[0m  [1m[34mSELECT 1 AS one FROM "bookings" WHERE "bookings"."room_id" = 3 AND ((check_in <= '2026-02-09' AND check_out >= '2026-02-04') OR (check_in <= '2026-02-04' AND check_out >= '2026-02-09')) AND "bookings"."status" != 'cancelled' LIMIT 1 /*application='Backend'*/[0m
+  ↳ app/models/room.rb:24:in `available_for_dates?'
+  [1m[36mBooking Exists? (0.3ms)[0m  [1m[34mSELECT 1 AS one FROM "bookings" WHERE "bookings"."confirmation" = '5XLVQTX' LIMIT 1 /*application='Backend'*/[0m
+  ↳ app/models/booking.rb:43:in `block in generate_confirmation_code'
+  [1m[36mBooking Create (0.5ms)[0m  [1m[32mINSERT INTO "bookings" ("user_id", "guest_name", "guest_count", "confirmation", "room_type_id", "room_id", "check_in", "check_out", "status", "price", "authorize_card", "created_at", "updated_at") VALUES (2, 'Thomas Shelby', 1, '5XLVQTX', 1, 3, '2026-02-04', '2026-02-09', 'Checked In', 660.0, TRUE, '2026-02-04 20:31:27.148416', '2026-02-04 20:31:27.148416') RETURNING "id" /*application='Backend'*/[0m
+  [1m[36mTRANSACTION (0.4ms)[0m  [1m[35mCOMMIT /*application='Backend'*/[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*application='Backend'*/[0m
+  ↳ app/models/booking.rb:43:in `block in generate_confirmation_code'
+  [1m[36mBooking Exists? (0.6ms)[0m  [1m[34mSELECT 1 AS one FROM "bookings" WHERE "bookings"."confirmation" = 'X2PNQYU' LIMIT 1 /*application='Backend'*/[0m
+  ↳ app/models/booking.rb:43:in `block in generate_confirmation_code'
+  [1m[36mBooking Create (0.4ms)[0m  [1m[32mINSERT INTO "bookings" ("user_id", "guest_name", "guest_count", "confirmation", "room_type_id", "room_id", "check_in", "check_out", "status", "price", "authorize_card", "created_at", "updated_at") VALUES (2, 'Olivia Parker', 3, 'X2PNQYU', 4, NULL, '2026-02-06', '2026-02-09', 'Departing', 594.0, FALSE, '2026-02-04 20:31:27.151471', '2026-02-04 20:31:27.151471') RETURNING "id" /*application='Backend'*/[0m
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mCOMMIT /*application='Backend'*/[0m
